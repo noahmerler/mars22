@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maras Geschenk zum 22.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            display: none; /* Initially hidden */
+        }
+        .row span {
+            font-size: 24px;
+            margin-right: 20px;
+        }
+        .row button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .visible {
+            display: flex; /* Show the row when it has the "visible" class */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Maras Geschenk zum 22.</h1>
+        <div class="row visible" id="row-wer">
+            <span>Wer?</span>
+            <button id="button-wer" onclick="location.href='wer.html'">???</button>
+        </div>
+        <div class="row" id="row-wo">
+            <span>Wo?</span>
+            <button id="button-wo" onclick="location.href='wo.html'">???</button>
+        </div>
+        <div class="row" id="row-was">
+            <span>Was?</span>
+            <button onclick="location.href='marsle.html'">???</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to make rows visible based on URL parameters and change button text
+        function checkVisibility() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('showWo')) {
+                document.getElementById('row-wo').classList.add('visible');
+                document.getElementById('button-wer').textContent = 'you & me❤️';
+            }
+            if (urlParams.has('showWas')) {
+                document.getElementById('row-was').classList.add('visible');
+                document.getElementById('button-wo').textContent = 'Innsbruck🚞💁‍♀️';
+            }
+        }
+        window.onload = checkVisibility;
+    </script>
+</body>
+</html>

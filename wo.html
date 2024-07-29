@@ -17,21 +17,226 @@
         .container {
             text-align: center;
         }
+        .crossword-row {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.5s;
+        }
+        .help-button {
+            margin-left: 10px;
+            cursor: pointer;
+        }
         .back-button {
+            display: none;
             position: absolute;
             top: 10px;
             left: 10px;
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+        }
+        .check-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeRed {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: #d32f2f; }
+        }
+        @keyframes fadeGreen {
+            from { background-color: transparent; }
+            to { background-color: #6aaa64; }
+        }
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Wo?</h1>
-        <!-- Inhalt für "Wo?" hier einfügen -->
-        <button class="back-button" onclick="location.href='index.html?showWo=true&showWas=true'">Zurück</button>
+        <div id="crossword">
+            <!-- Crossword rows will be inserted here -->
+        </div>
+        <button class="check-button" onclick="checkAnswers()">Check Answers</button>
+        <button class="back-button" id="backButton" onclick="location.href='index.html?showWo=true&showWas=true'">Zurück</button>
+        <canvas id="confetti" class="confetti"></canvas>
     </div>
+
+    <script>
+        const questions = [
+            "Süsseste Hund auf der Welt!",
+            "Unser erster Urlaub!",
+            "IG-Account von dir!",
+            "Ein Tier, das wir uns nennen!",
+            "Ein Geschäft, das klingt, als wäre es für Typen, ist es aber nicht!",
+            "Deutscher Artist, den du seit Ewigkeiten fühlst!",
+            "Ein Essen, das wir beide immer essen könnten!",
+            "Ein Ort, wo du schon Städte gebaut hast!",
+            "Nachname eines Autors/einer Autorin, der/die dir gefällt!"
+        ];
+
+        const answers = [
+            "archIe",
+            "Nizza",
+            "heartmoNsters",
+            "Schnecke",
+            "suBdued",
+            "cRo",
+            "sUshi",
+            "Catan",
+            "fitzeK"
+        ];
+
+        function createCrossword() {
+            const crossword = document.getElementById('crossword');
+            for (let i = 0; i < answers.length; i++) {
+                const row = document.createElement('div');
+                row.className = 'crossword-row';
+                for (let j = 0; j < answers[i].length; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.contentEditable = true;
+                    cell.id = `cell-${i}-${j}`;
+                    cell.addEventListener('input', (event) => handleInput(event, i, j));
+                    cell.addEventListener('keydown', (event) => moveToNextCell(event, i, j, answers[i].length));
+                    row.appendChild(cell);
+                }
+                const helpButton = document.createElement('button');
+                helpButton.className = 'help-button';
+                helpButton.textContent = '?';
+                helpButton.onclick = () => alert(questions[i]);
+                row.appendChild(helpButton);
+                crossword.appendChild(row);
+            }
+        }
+
+        function handleInput(event, rowIndex, cellIndex) {
+            let value = event.target.textContent.toUpperCase();
+            if (value.length > 1) {
+                event.target.textContent = value.charAt(0);
+                value = value.charAt(0);
+            }
+            const nextCell = document.getElementById(`cell-${rowIndex}-${cellIndex + 1}`);
+            if (nextCell && value && event.inputType !== 'deleteContentBackward') {
+                nextCell.focus();
+            }
+        }
+
+        function moveToNextCell(event, rowIndex, cellIndex, maxIndex) {
+            const key = event.key;
+            if (key === 'Enter' || key === 'Return') {
+                checkAnswers();
+            } else if (key !== 'Backspace' && key !== 'Delete' && event.target.textContent.length === 1) {
+                const nextCell = document.getElementById(`cell-${rowIndex}-${cellIndex + 1}`);
+                if (nextCell) {
+                    nextCell.focus();
+                }
+            }
+        }
+
+        function checkAnswers() {
+            let allCorrect = true;
+            for (let i = 0; i < answers.length; i++) {
+                const answer = answers[i];
+                let rowCorrect = true;
+                for (let j = 0; j < answer.length; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    const userAnswer = cell.textContent.toUpperCase();
+                    if (userAnswer !== answer[j].toUpperCase()) {
+                        rowCorrect = false;
+                    }
+                }
+                if (!rowCorrect) {
+                    allCorrect = false;
+                    for (let j = 0; j < answer.length; j++) {
+                        const cell = document.getElementById(`cell-${i}-${j}`);
+                        cell.style.animation = 'fadeRed 1s';
+                        setTimeout(() => {
+                            cell.style.animation = '';
+                        }, 1000);
+                    }
+                }
+            }
+            if (allCorrect) {
+                const cells = [];
+                for (let i = 0; i < answers.length; i++) {
+                    const answer = answers[i];
+                    const upperIndex = answer.search(/[A-Z]/);
+                    cells.push(document.getElementById(`cell-${i}-${upperIndex}`));
+                }
+                animateCells(cells);
+                
+                // Disable all cells
+                const allCells = document.querySelectorAll('.cell');
+                allCells.forEach(cell => {
+                    cell.contentEditable = false;
+                    cell.style.cursor = 'default';
+                });
+
+                // Show back button with fade-in
+                const backButton = document.getElementById('backButton');
+                backButton.style.display = 'block';
+                setTimeout(() => {
+                    backButton.style.opacity = '1';
+                }, 0);
+            }
+        }
+
+        function animateCells(cells) {
+            let delay = 0;
+            cells.forEach((cell, index) => {
+                setTimeout(() => {
+                    cell.style.animation = 'fadeGreen 1s forwards';
+                    if (index === cells.length - 1) {
+                        setTimeout(startConfetti, 1000); // Start confetti after the last cell turns green
+                    }
+                }, delay);
+                delay += 500; // Adjust the delay as needed
+            });
+        }
+
+        function startConfetti() {
+            const confettiSettings = { target: 'confetti', max: 200, size: 1.2, animate: true };
+            const confetti = new ConfettiGenerator(confettiSettings);
+            confetti.render();
+        }
+
+        // Include ConfettiGenerator library
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js';
+            script.async = true;
+            document.head.appendChild(script);
+        })();
+
+        createCrossword();
+    </script>
 </body>
 </html>
